@@ -135,7 +135,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+growhub/.env
 .envrc
 .venv
 env/
