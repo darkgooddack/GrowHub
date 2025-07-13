@@ -20,3 +20,33 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data["password"],
         )
         return user
+
+
+class UserReadSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+    grade = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'telegram', 'avatar',
+            'github', 'linkedin', 'resume', 'info',
+            'role', 'grade'
+        ]
+        read_only_fields = fields
+
+    def get_role(self, obj):
+        return obj.get_role_id_display()
+
+    def get_grade(self, obj):
+        return obj.get_grade_id_display()
+
+
+class UserWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'telegram', 'avatar',
+            'github', 'linkedin', 'resume', 'info',
+            'role_id', 'grade_id'
+        ]
