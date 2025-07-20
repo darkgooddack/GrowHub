@@ -1,7 +1,9 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, mixins, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from .filters import UserFilter
 from .models import User
 from .serializers import RegisterSerializer, UserReadSerializer, UserWriteSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
@@ -22,6 +24,8 @@ class UserViewSet(
     queryset = User.objects.all()
     serializer_class = UserReadSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = UserFilter
 
     def get_permissions(self):
         if self.action == 'list':
