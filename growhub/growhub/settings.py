@@ -22,9 +22,6 @@ DEBUG = True
 ALLOWED_HOSTS = []
 SECRET_KEY = env('SECRET_KEY')
 ALGORITHM = env('ALGORITHM')
-print(SECRET_KEY)
-print(ALGORITHM)
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -38,6 +35,7 @@ INSTALLED_APPS = [
     'users',
     'projects',
     'comments',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -54,12 +52,21 @@ AUTH_USER_MODEL = 'users.User'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
 
 ROOT_URLCONF = 'growhub.urls'
 
@@ -87,7 +94,6 @@ WSGI_APPLICATION = 'growhub.wsgi.application'
 DATABASES = {
     'default': env.db()
 }
-print(DATABASES)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

@@ -24,9 +24,16 @@ class UserViewSet(
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action == 'list':
+            return [IsAuthenticated()]
+        if self.action == 'retrieve':
             return [IsAdminUser()]
         return super().get_permissions()
+
+    def get_serializer_class(self):
+        if self.action in ['update', 'partial_update']:
+            return UserWriteSerializer
+        return UserReadSerializer
 
     def get_object(self):
         if self.request.user.is_superuser and 'pk' in self.kwargs:
