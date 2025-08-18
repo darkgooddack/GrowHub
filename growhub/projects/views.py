@@ -1,10 +1,13 @@
 from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
 
 from .models import Project, ProjectPosition, Stack
-from .serializers import ProjectReadSerializer, ProjectWriteSerializer, ProjectPositionSerializer, StackSerializer, \
-    ProjectPositionReadSerializer
+from .serializers import (ProjectReadSerializer,
+                          ProjectWriteSerializer, ProjectPositionSerializer,
+                          StackSerializer, ProjectPositionReadSerializer)
 
 
 # Разрешения: только автор может редактировать, остальные - только чтение
@@ -18,14 +21,18 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 # ViewSet для проекта
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().prefetch_related('stacks', 'positions', 'author')
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter
+    ]
     filterset_fields = ['stacks', 'positions__role_id', 'positions__grade_id']
     search_fields = ['name', 'description', 'author__username']
     ordering_fields = ['created_at', 'name']
     ordering = ['-created_at']
 
     def get_serializer_class(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'my']:
             return ProjectReadSerializer
         return ProjectWriteSerializer
 
@@ -34,12 +41,26 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return [IsAuthorOrReadOnly()]
         return [permissions.IsAuthenticatedOrReadOnly()]
 
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def my(self, request):
+        """
+        Вернуть только проекты текущего пользователя
+        """
+        projects = self.queryset.filter(author=request.user)
+        serializer = self.get_serializer(projects, many=True)
+        return Response(serializer.data)
 
-# ViewSet для ProjectPosition (если нужен отдельный CRUD)
+
 class ProjectPositionViewSet(viewsets.ModelViewSet):
-    queryset = ProjectPosition.objects.all()
+    queryset = ProjectPosition.objects.all().select_related('project')
     serializer_class = ProjectPositionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['role_id', 'grade_id']  # фильтруем по этим полям
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
@@ -47,9 +68,6 @@ class ProjectPositionViewSet(viewsets.ModelViewSet):
         return ProjectPositionSerializer
 
     def get_queryset(self):
-        """
-        Пользователь видит свои позиции или все позиции для чтения
-        """
         user = self.request.user
         if user.is_authenticated:
             return ProjectPosition.objects.select_related('project').all()
@@ -63,4 +81,3 @@ class StackViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Stack.objects.all()
     serializer_class = StackSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-

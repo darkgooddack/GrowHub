@@ -15,4 +15,5 @@ class UserFilter(FilterSet):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'telegram', 'github', 'linkedin', 'role_id', 'grade_id']
+        fields = ['username', 'email', 'telegram',
+                  'github', 'linkedin', 'role_id', 'grade_id']

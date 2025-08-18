@@ -3,9 +3,11 @@ from .models import User, RoleEnum, GradeEnum, Skill, Experience
 
 
 class ExperienceSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(read_only=True)
+
     class Meta:
         model = Experience
-        fields = ['company', 'position', 'start_date', 'end_date', 'description']
+        fields = ['id', 'company', 'position', 'start_date', 'end_date', 'description']
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -31,15 +33,14 @@ class SkillSerializer(serializers.ModelSerializer):
 
 
 class UserReadSerializer(serializers.ModelSerializer):
-    skills = SkillSerializer(many=True, read_only=True)  # Все навыки пользователя
-    experiences = ExperienceSerializer(many=True, read_only=True)  # Добавляем места работы
+    skills = SkillSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'telegram', 'avatar',
             'github', 'linkedin', 'resume', 'info',
-            'role_id', 'grade_id', 'skills', 'experiences'
+            'role_id', 'grade_id', 'skills'
         ]
         read_only_fields = fields
 

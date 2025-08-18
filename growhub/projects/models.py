@@ -11,6 +11,7 @@ class Stack(models.Model):
     def __str__(self):
         return self.name
 
+
 class Project(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
@@ -30,9 +31,21 @@ class Project(models.Model):
 
 class ProjectPosition(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='positions')
-    role_id = models.CharField(max_length=50, choices=RoleEnum.choices, default=RoleEnum.NOT_SELECTED)
-    grade_id = models.CharField(max_length=50, choices=GradeEnum.choices, default=GradeEnum.NOT_SELECTED)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='positions'
+    )
+    role_id = models.CharField(
+        max_length=50,
+        choices=RoleEnum.choices,
+        default=RoleEnum.NOT_SELECTED
+    )
+    grade_id = models.CharField(
+        max_length=50,
+        choices=GradeEnum.choices,
+        default=GradeEnum.NOT_SELECTED
+    )
     count_needed = models.PositiveIntegerField(default=1)
 
     def __str__(self):

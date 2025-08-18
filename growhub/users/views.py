@@ -1,11 +1,13 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, mixins, viewsets, status
-from rest_framework.decorators import action
+from rest_framework import generics, mixins, viewsets, status, permissions
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 from .filters import UserFilter
-from .models import User, Skill
-from .serializers import RegisterSerializer, UserReadSerializer, UserWriteSerializer, SkillSerializer
+from .models import User, Skill, Experience
+from .serializers import (
+    RegisterSerializer, UserReadSerializer,
+    UserWriteSerializer, SkillSerializer, ExperienceSerializer)
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
 
@@ -46,10 +48,10 @@ class UserViewSet(
 
     def get_queryset(self):
         if self.action == 'list':
-            return User.objects.all()  # Все аутентифицированные видят всех
+            return User.objects.all()
         if self.request.user.is_superuser:
-            return User.objects.all()  # Админ видит всех в любом случае
-        return User.objects.filter(id=self.request.user.id)  # Обычный юзер видит только себя
+            return User.objects.all()
+        return User.objects.filter(id=self.request.user.id)
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -72,3 +74,24 @@ class SkillViewSet(viewsets.ModelViewSet):
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
     permission_classes = [IsAdminUser]
+
+
+class ExperienceViewSet(viewsets.ModelViewSet):
+    serializer_class = ExperienceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.kwargs.get("user_pk")
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise NotFound("Пользователь не найден")
+        return Experience.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        user_id = self.kwargs.get("user_pk")
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise NotFound("Пользователь не найден")
+        serializer.save(user=user)
