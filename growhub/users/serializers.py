@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from .models import User, RoleEnum, GradeEnum, Skill, UserSkill
+from .models import User, RoleEnum, GradeEnum, Skill, Experience
 
 
-class UserSerializer(serializers.ModelSerializer):
+class ExperienceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = "__all__"
+        model = Experience
+        fields = ['company', 'position', 'start_date', 'end_date', 'description']
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -24,13 +24,22 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = '__all__'
+
+
 class UserReadSerializer(serializers.ModelSerializer):
+    skills = SkillSerializer(many=True, read_only=True)  # Все навыки пользователя
+    experiences = ExperienceSerializer(many=True, read_only=True)  # Добавляем места работы
+
     class Meta:
         model = User
         fields = [
-            'username', 'email', 'telegram', 'avatar',
+            'id', 'username', 'email', 'telegram', 'avatar',
             'github', 'linkedin', 'resume', 'info',
-            'role_id', 'grade_id'
+            'role_id', 'grade_id', 'skills', 'experiences'
         ]
         read_only_fields = fields
 
@@ -38,33 +47,31 @@ class UserReadSerializer(serializers.ModelSerializer):
 class UserWriteSerializer(serializers.ModelSerializer):
     role_id = serializers.ChoiceField(choices=RoleEnum.choices)
     grade_id = serializers.ChoiceField(choices=GradeEnum.choices)
+    skill_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False
+    )
+    experiences_data = ExperienceSerializer(many=True, required=False)
 
     class Meta:
         model = User
         fields = [
             'username', 'email', 'telegram', 'avatar',
             'github', 'linkedin', 'resume', 'info',
-            'role_id', 'grade_id'
+            'role_id', 'grade_id', 'skill_ids', 'experiences_data'
         ]
 
+    def update(self, instance, validated_data):
+        skill_ids = validated_data.pop('skill_ids', None)
+        experiences_data = validated_data.pop('experiences_data', None)
+        instance = super().update(instance, validated_data)
 
-class SkillSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Skill
-        fields = '__all__'
+        if skill_ids is not None:
+            instance.skills.set(skill_ids)
 
+        if experiences_data is not None:
+            instance.experiences.all().delete()  # удаляем старые места работы
+            for exp_data in experiences_data:
+                Experience.objects.create(user=instance, **exp_data)
 
-class UserSkillSerializer(serializers.ModelSerializer):
-    skill = SkillSerializer(read_only=True)
-    skill_id = serializers.UUIDField(write_only=True)
-
-    class Meta:
-        model = UserSkill
-        fields = ['id', 'user', 'skill', 'skill_id']
-        read_only_fields = ['user']
-
-    def create(self, validated_data):
-        user = self.context['request'].user
-        skill_id = validated_data.pop('skill_id')
-        skill = Skill.objects.get(id=skill_id)
-        return UserSkill.objects.create(user=user, skill=skill)
+        return instance

@@ -4,9 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .filters import UserFilter
-from .models import User, Skill, UserSkill
-from .serializers import RegisterSerializer, UserReadSerializer, UserWriteSerializer, SkillSerializer, \
-    UserSkillSerializer
+from .models import User, Skill
+from .serializers import RegisterSerializer, UserReadSerializer, UserWriteSerializer, SkillSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
 
@@ -58,21 +57,18 @@ class UserViewSet(
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    @action(detail=False, methods=['get'])
-    def me(self, request):
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        read_serializer = UserReadSerializer(instance, context={'request': request})
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
 
 class SkillViewSet(viewsets.ModelViewSet):
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
-    permission_classes = [IsAdminUser]  # только админ может CRUD навыки
-
-
-class UserSkillViewSet(viewsets.ModelViewSet):
-    serializer_class = UserSkillSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return UserSkill.objects.filter(user=self.request.user)
+    permission_classes = [IsAdminUser]

@@ -51,6 +51,15 @@ class GradeEnum(models.TextChoices):
     ARCHITECT = 'architect', 'Архитектор'
 
 
+class Skill(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=50, unique=True)
@@ -61,6 +70,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     linkedin = models.URLField(validators=[URLValidator()], blank=True, null=True)
     resume = models.URLField(validators=[URLValidator()], blank=True, null=True)
     info = models.TextField(blank=True, null=True)
+    skills = models.ManyToManyField(Skill, related_name='users', blank=True)
     role_id = models.CharField(
         max_length=20,
         choices=RoleEnum.choices,
@@ -88,23 +98,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def has_module_perms(self, app_label):
         return self.is_staff
 
-
-class Skill(models.Model):
+class Experience(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    code = models.CharField(max_length=50, unique=True)
-    name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, related_name='experiences', on_delete=models.CASCADE)
+    company = models.CharField(max_length=100)
+    position = models.CharField(max_length=100)
+    start_date = models.DateField()
+    end_date = models.DateField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return self.name
-
-
-class UserSkill(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, related_name='skills', on_delete=models.CASCADE)
-    skill = models.ForeignKey(Skill, related_name='users', on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('user', 'skill')
-
-    def __str__(self):
-        return f"{self.user.username} - {self.skill.name}"
+        return f"{self.position} at {self.company}"
