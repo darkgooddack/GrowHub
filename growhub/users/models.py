@@ -87,3 +87,24 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def has_module_perms(self, app_label):
         return self.is_staff
+
+
+class Skill(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+class UserSkill(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, related_name='skills', on_delete=models.CASCADE)
+    skill = models.ForeignKey(Skill, related_name='users', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'skill')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.skill.name}"
