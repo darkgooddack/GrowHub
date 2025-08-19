@@ -23,7 +23,7 @@ class Project(models.Model):
         related_name='projects'
     )
     stacks = models.ManyToManyField('Stack', related_name='projects', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return self.name

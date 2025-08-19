@@ -5,19 +5,19 @@ from users.serializers import UserReadSerializer
 from users.models import User
 
 
-class ProjectPositionSerializer(serializers.ModelSerializer):
-    role_display = serializers.CharField(source='get_role_id_display', read_only=True)
-    grade_display = serializers.CharField(source='get_grade_id_display', read_only=True)
+class ProjectPositionWriteSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(source='project.author.id', read_only=True)
 
     class Meta:
         model = ProjectPosition
-        fields = ['id', 'role_id', 'role_display',
-                  'grade_id', 'grade_display', 'count_needed']
+        fields = ['id', 'project', 'user_id', 'role_id', 'grade_id', 'count_needed']
+        read_only_fields = ['id', 'project', 'user_id']
+
 
 
 class ProjectPositionReadSerializer(serializers.ModelSerializer):
-    role_display = serializers.CharField(source='get_role_id_display', read_only=True)
-    grade_display = serializers.CharField(source='get_grade_id_display', read_only=True)
+    role = serializers.CharField(source='get_role_id_display', read_only=True)
+    grade = serializers.CharField(source='get_grade_id_display', read_only=True)
     project_id = serializers.UUIDField(source='project.id', read_only=True)
     user_id = serializers.UUIDField(source='project.author.id', read_only=True)
 
@@ -25,8 +25,8 @@ class ProjectPositionReadSerializer(serializers.ModelSerializer):
         model = ProjectPosition
         fields = [
             'id',
-            'role_display',
-            'grade_display',
+            'role',
+            'grade',
             'count_needed',
             'project_id',
             'user_id'
@@ -46,21 +46,30 @@ class ProjectAuthorSerializer(serializers.ModelSerializer):
 
 
 class ProjectReadSerializer(serializers.ModelSerializer):
-    author = ProjectAuthorSerializer(read_only=True)
-    stacks = StackSerializer(many=True, read_only=True)
+    author_id = serializers.UUIDField(source="author.id")
+    positions = ProjectPositionReadSerializer(many=True)
+    stacks = StackSerializer(many=True)
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'github',
-                  'description', 'author',
-                  'created_at', 'stacks']
+        fields = [
+            'id',
+            'name',
+            'github',
+            'description',
+            'author_id',
+            'created_at',
+            'stacks',
+            'positions',
+        ]
+        read_only_fields = fields
 
 
 class ProjectWriteSerializer(serializers.ModelSerializer):
-    positions_data = ProjectPositionSerializer(
-        many=True, write_only=True, required=False
+    positions_data = ProjectPositionWriteSerializer(
+        many=True, required=False
     )
-    stacks_ids = serializers.ListField(
+    stacks = serializers.ListField(
         child=serializers.UUIDField(),
         write_only=True,
         required=False
@@ -68,11 +77,11 @@ class ProjectWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['name', 'github', 'description', 'positions_data', 'stacks_ids']
+        fields = ['name', 'github', 'description', 'positions_data', 'stacks']
 
     def create(self, validated_data):
         positions_data = validated_data.pop('positions_data', [])
-        stacks_ids = validated_data.pop('stacks_ids', [])
+        stacks_ids = validated_data.pop('stacks', [])
         user = self.context['request'].user
 
         project = Project.objects.create(author=user, **validated_data)
