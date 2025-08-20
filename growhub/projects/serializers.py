@@ -14,7 +14,6 @@ class ProjectPositionWriteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'project', 'user_id']
 
 
-
 class ProjectPositionReadSerializer(serializers.ModelSerializer):
     role = serializers.CharField(source='get_role_id_display', read_only=True)
     grade = serializers.CharField(source='get_grade_id_display', read_only=True)

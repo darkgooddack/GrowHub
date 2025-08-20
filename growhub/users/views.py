@@ -11,7 +11,6 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework import filters
 
 
-
 class IsSelfOrReadOnly(permissions.BasePermission):
     """
     Разрешает изменение/удаление только самому пользователю,
@@ -22,6 +21,7 @@ class IsSelfOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return obj == request.user
+
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer

@@ -55,12 +55,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         project = Project.objects.get(pk=response.data['id'])
-        return Response(ProjectReadSerializer(project, context={'request': request}).data)
+        return Response(ProjectReadSerializer(
+            project,
+            context={'request': request}
+        ).data)
 
     def update(self, request, *args, **kwargs):
-        response = super().update(request, *args, **kwargs)
         project = self.get_object()
-        return Response(ProjectReadSerializer(project, context={'request': request}).data)
+        return Response(
+            ProjectReadSerializer(
+                project,
+                context={'request': request}
+            ).data
+        )
 
     @action(
         detail=False,
@@ -71,7 +78,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         projects = self.queryset.filter(author=request.user)
         serializer = self.get_serializer(projects, many=True)
         return Response(serializer.data)
-
 
 
 class ProjectPositionViewSet(viewsets.ModelViewSet):

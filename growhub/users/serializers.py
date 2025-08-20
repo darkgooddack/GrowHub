@@ -53,7 +53,7 @@ class UserWriteSerializer(serializers.ModelSerializer):
         child=serializers.UUIDField(),
         required=False
     )
-    experiences= ExperienceSerializer(many=True, required=False)
+    experiences = ExperienceSerializer(many=True, required=False)
 
     class Meta:
         model = User
