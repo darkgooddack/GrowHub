@@ -14,5 +14,8 @@ class UsersConfig(AppConfig):
         email = f'{username}@example.com'
 
         if not User.objects.filter(username=username).exists():
-            print(f'Создаём superuser {username}')
-            User.objects.create_superuser(username=username, email=email, password=password)
+            User.objects.create_superuser(
+                username=username,
+                email=email,
+                password=password
+            )
