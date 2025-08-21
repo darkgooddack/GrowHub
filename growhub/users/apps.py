@@ -1,5 +1,7 @@
 from django.apps import AppConfig
 from django.contrib.auth import get_user_model
+from django.db.utils import ProgrammingError
+
 from growhub.settings import SUPERUSER_NAME, SUPERUSER_PASSWORD
 
 
@@ -13,9 +15,12 @@ class UsersConfig(AppConfig):
         password = SUPERUSER_PASSWORD
         email = f'{username}@example.com'
 
-        if not User.objects.filter(username=username).exists():
-            User.objects.create_superuser(
-                username=username,
-                email=email,
-                password=password
-            )
+        try:
+            if not User.objects.filter(username=username).exists():
+                User.objects.create_superuser(
+                    username=username,
+                    email=email,
+                    password=password
+                )
+        except ProgrammingError:
+            pass

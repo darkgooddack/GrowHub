@@ -1,0 +1,37 @@
+services:
+  growhub-bd:
+    container_name: growhub-bd
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: growhub
+    volumes:
+      - growhub-bd-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  growhub:
+    container_name: growhub
+    build: ..
+    volumes:
+      - ../growhub:/app
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+    depends_on:
+      growhub-bd:
+        condition: service_healthy
+    env_file:
+      - .env
+
+volumes:
+  growhub-bd-data:
