@@ -9,17 +9,16 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-import os
 import environ
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
-env.read_env(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
+env.read_env(BASE_DIR / '.env')
 
 
-DEBUG = True
-ALLOWED_HOSTS = []
+DEBUG = env.bool('DEBUG', default=True)
+ALLOWED_HOSTS = ['*'] if DEBUG else env.list('ALLOWED_HOSTS')
 SECRET_KEY = env('SECRET_KEY')
 ALGORITHM = env('ALGORITHM')
 
@@ -68,13 +67,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=DEBUG)
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-]
-
+])
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['http://localhost:5173'])
 
 ROOT_URLCONF = 'growhub.urls'
 
@@ -143,3 +142,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SWAGGER_SETTINGS = {
+    'DEFAULT_API_URL': env('API_URL', default=None),
+}
